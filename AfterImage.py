@@ -1,6 +1,6 @@
 import math
 import numpy as np
-import json
+
 
 class incStat:
     def __init__(self, Lambda, isTypeJitter=False):  # timestamp is creation time
@@ -9,16 +9,15 @@ class incStat:
         self.w = 0  # weight
         self.isTypeJitter = isTypeJitter
         self.Lambda = Lambda  # Decay Factor
-        self.lastTimestamp = 0
+        self.lastTimestamp = np.nan
         self.cur_mean = np.nan
         self.cur_var = np.nan
         self.cur_std = np.nan
 
     def insert(self, v, t=0):  # v is a scalar, t is v's arrival the timestamp
         if self.isTypeJitter:
-            dif = t - self.lastTimestamp
-            if dif > 0:
-                v = dif
+            if not math.isnan(self.lastTimestamp):
+                v = t - self.lastTimestamp
             else:
                 v = 0
         self.processDecay(t)
@@ -34,13 +33,13 @@ class incStat:
     def processDecay(self, timestamp):
         factor=1
         # check for decay
-        timeDiff = timestamp - self.lastTimestamp
-        if timeDiff > 0:
+        if not math.isnan(self.lastTimestamp):
+            timeDiff = timestamp - self.lastTimestamp
             factor = math.pow(2, (-self.Lambda * timeDiff))
             self.CF1 = self.CF1 * factor
             self.CF2 = self.CF2 * factor
             self.w = self.w * factor
-            self.lastTimestamp = timestamp
+        self.lastTimestamp = timestamp
         return factor
 
     def weight(self):
@@ -70,35 +69,15 @@ class incStat:
     def getHeaders(self):
         return "weight", "mean", "variance"
 
-    def toJSON(self):
-        j = {}
-        j['CF1'] = self.CF1
-        j['CF2'] = self.CF2
-        j['w'] = self.w
-        j['isTypeJitter'] = self.isTypeJitter
-        j['Lambda'] = self.Lambda
-        j['lastTimestamp'] = self.lastTimestamp
-        return json.dumps(j)
-
-    def loadFromJSON(self,JSONstring):
-        j = json.loads(JSONstring)
-        self.CF1 = j['CF1']
-        self.CF2 = j['CF2']
-        self.w = j['w']
-        self.isTypeJitter = j['isTypeJitter']
-        self.Lambda = j['Lambda']
-        self.lastTimestamp = j['lastTimestamp']
-
 #like incStat, but maintains stats between two streams
 class incStat_2D(incStat):
     def __init__(self, Lambda):  # timestamp is creation time
         self.CF1 = 0  # linear sum
         self.CF2 = 0  # sum of squares
         self.CF3 = None # sum of residules (A-uA)
-        self.CF3_lastTimestamp = None # sum of residules (A-uA)
         self.w = 0  # weight
         self.Lambda = Lambda  # Decay Factor
-        self.lastTimestamp = 0
+        self.lastTimestamp = np.nan
         self.cur_mean = np.nan
         self.cur_var = np.nan
         self.cur_std = np.nan
@@ -106,7 +85,7 @@ class incStat_2D(incStat):
         self.last_residule = 0  # the value of the last residule
 
     #other_incS_decay is the decay factor of the other incstat
-    def insert2D(self, v, t, other_incS_lastDecayedRes):  # also updates covariance (expensive)
+    def insert2D(self, v, t, other_incS_lastRes, other_incS_decay = 1):  # also updates covariance (expensive)
         self.processDecay(t)
 
         # update with v
@@ -118,35 +97,21 @@ class incStat_2D(incStat):
         self.cur_std = np.nan
         self.cur_cov = np.nan
         self.last_residule = v - self.mean()
-        self.CF3[0] = self.CF3[0] + self.last_residule * other_incS_lastDecayedRes
+        self.CF3[0] = self.CF3[0] + self.last_residule * other_incS_lastRes * other_incS_decay
 
     def processDecay(self, timestamp):
         # check for decay
-        factor = 1
-        factor_cf3 = 1
-        timeDiff1 = timestamp - self.lastTimestamp
-        timeDiff2 = self.lastTimestamp - self.CF3_lastTimestamp[0]  # dif between current time...
-
-        if timeDiff1 > 0:
-            factor = math.pow(2, (-self.Lambda * timeDiff1))
+        factor=1
+        if not math.isnan(self.lastTimestamp):
+            timeDiff = timestamp - self.lastTimestamp
+            factor = math.pow(2, (-self.Lambda * timeDiff))
             self.CF1 = self.CF1 * factor
             self.CF2 = self.CF2 * factor
+            if self.CF3 == None:
+                self.CF3 = [0]
+            self.CF3[0] = self.CF3[0] * factor
             self.w = self.w * factor
-            self.last_residule = self.last_residule * factor
-            if timeDiff2 == 0:  # i did the last update
-                factor_cf3 = factor
-            elif self.CF3_lastTimestamp[0] > timestamp:  # out of order
-                factor_cf3 = 1
-            else:
-                factor_cf3 = math.pow(2, (-self.Lambda * (timestamp - self.CF3_lastTimestamp[0])))
-            self.lastTimestamp = timestamp
-
-        if self.CF3 == None:
-            self.CF3 = [0]  # make it
-        else:
-            self.CF3[0] = self.CF3[0] * factor_cf3  # decay it
-            if timeDiff2 > 0:  # normal (in order) timestamp
-                self.CF3_lastTimestamp[0] = timestamp
+        self.lastTimestamp = timestamp
         return factor
 
     def radius(self, istat_ref):  # the radius of two stats
@@ -265,10 +230,11 @@ class windowed_incStat_2D:
 
     # updates the statistics
     # val is the new observation
+    # timestamp is the arrival time of val.
     def updateStats(self, val, timestamp):
         for i in range(0,len(self.incStats)):
-            self.other_winStat[0].incStats[i].processDecay(timestamp) #this decays the otherIncStat's lastRes
-            self.incStats[i].insert2D(val, timestamp, self.other_winStat[0].incStats[i].last_residule)
+            decay = self.other_winStat[0].incStats[i].processDecay(timestamp)
+            self.incStats[i].insert2D(val, timestamp, self.other_winStat[0].incStats[i].last_residule, decay)
 
     # First updates, then gets the stats (weight, mean, variance, magnitude, radius, and covariance)
     def updateAndGetStats(self, val, timestamp):
@@ -282,7 +248,6 @@ class windowed_incStat_2D:
         other_winStat[0].other_winStat = [self]
         for i in range(0,len(self.incStats)):
             self.incStats[i].CF3 = other_winStat[0].incStats[i].CF3 = [0]
-            self.incStats[i].CF3_lastTimestamp = other_winStat[0].incStats[i].CF3_lastTimestamp = [0]
 
     def getMaxW(self,t):
         lastIncStat = len(self.incStats)
@@ -298,16 +263,12 @@ class incStatHT:
     # If 1-dimensional, set key 2 to the empty string ''.
     # If 2-dimensional, key1 should be the target stream
     # Each lambda parameter determines a incStat's decay window size (factor): 2^(-lambda*deltaT)
-    def __init__(self,limit=np.Inf):
+    def __init__(self):
         self.HT = dict()
-        self.limit = limit
 
     def updateGet_1D(self, key, val, timestamp, L, isTypeJitter=False):  # 1D will only maintain the mean and variance
         wis = self.HT.get(key)
         if wis is None:
-            if len(self.HT) + 1 > self.limit:
-                raise LookupError(
-                    'Adding Entry:\n' + key + '\nwould exceed incStatHT 1D limit of '+str(self.limit)+'.\nObservation Rejected.')
             wis = [windowed_incStat(L,isTypeJitter)]
             self.HT[key] = wis
         stats = wis[0].updateAndGetStats(val, timestamp)
@@ -317,40 +278,19 @@ class incStatHT:
         tmp_incs = windowed_incStat(L)
         return tmp_incs.getHeaders()
 
-    #cleans out records that have a weight less than the cutoff.
-    #returns number or removed records.
-    def cleanOutOldRecords(self,cutoffWeight,curTime):
-        n = 0
-        dump = sorted(self.HT.items(), key=lambda tup: tup[1][0].getMaxW(curTime))
-        for entry in dump:
-            W = entry[1][0].getMaxW(curTime)
-            if W <= cutoffWeight:
-                key = entry[0]
-                del entry[1][0]
-                del self.HT[key]
-                n=n+1
-            elif W > cutoffWeight:
-                break
-        return n
-
 class incStatHT_2D(incStatHT):
     def updateGet_2D(self, key1, key2, val, timestamp, L):  # src and dst should be strings
         key = key1 + key2
         wis = self.HT.get(key)  # get windowed incrimental stat object
         if wis is None:
             wis = self.create_2D_entry(key1, key2, L)
-        elif wis[0].other_winStat == []:
+        elif hasattr(wis[0],'other_winStat') and wis[0].other_winStat == []:
             self.create_1D_entry(key1,key2,L,wis)
         stats = wis[0].updateAndGetStats(val, timestamp)
         return stats
 
     def create_1D_entry(self, key1, key2, L, wis):  # prectect with mutexes!
-        #check limit
-        if len(self.HT) + 1 > self.limit:
-            raise LookupError(
-                'Adding Entry:\n' + key2+key1 + '\nwould exceed incStatHT 2D limit of ' + str(
-                    self.limit) + '.\nObservation Rejected.')
-        #create
+        # create
         wis_k2_k1 = [windowed_incStat_2D(L)]
         # connect net stats..
         wis[0].join_with_winStat(wis_k2_k1)
@@ -359,28 +299,13 @@ class incStatHT_2D(incStatHT):
         return wis_k2_k1
 
     def create_2D_entry(self, key1, key2, L):  # prectect with mutexes!
-        #check limit
-        if len(self.HT) + 1 > self.limit:
-            raise LookupError(
-                'Adding Entry:\n' + key1+key2 + '\nwould exceed incStatHT 2D limit of ' + str(
-                    self.limit) + '.\nObservation Rejected.')
         # create
         wis_k1_k2 = [windowed_incStat_2D(L)]
-        #store
-        self.HT[key1 + key2] = wis_k1_k2
-
-        #check if otherside exist
-        wis_k2_k1 = self.HT.get(key2+key1)
-        if wis_k2_k1 is None:
-            # check limit
-            if len(self.HT) + 1 > self.limit:
-                raise LookupError(
-                    'Adding Entry:\n' + key2 + key1 + '\nwould exceed incStatHT 2D limit of ' + str(
-                        self.limit) + '.\nObservation Rejected.')
-            wis_k2_k1 = [windowed_incStat_2D(L)]
+        wis_k2_k1 = [windowed_incStat_2D(L)]
         # connect net stats..
         wis_k1_k2[0].join_with_winStat(wis_k2_k1)
         # store
+        self.HT[key1 + key2] = wis_k1_k2
         self.HT[key2 + key1] = wis_k2_k1
         return wis_k1_k2
 
