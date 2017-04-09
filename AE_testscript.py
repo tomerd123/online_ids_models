@@ -16,6 +16,7 @@ def test_dA(learning_rate=0.1, corruption_level=0.0, training_epochs=50):
     # construct dA
     da = dA(input=data, n_visible=20, n_hidden=7, rng=rng)
 
+
     # train
     for epoch in range(training_epochs):
         da.train(lr=learning_rate, corruption_level=corruption_level)

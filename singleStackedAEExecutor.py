@@ -5,12 +5,13 @@ import numpy
 #from sklearn.preprocessing import scale
 #from scipy import stats
 import csv
+import stackedDA
 
 
 class Executor (object):
 
     def trainAndexecute (self,dbPath,scoresPath,visible,trainToFeedForwardThresh):
-        da=dA.dA(None,None,visible,int(visible/3))
+        da=stackedDA.stackedDA(None,None,visible,int(visible/3),int(visible/3))
 
         with open(dbPath, 'rt') as csvin:
             with open(scoresPath, 'wt') as csvout:
@@ -81,4 +82,4 @@ ex=Executor()
 
 #ex.trainAndexecute('/media/root/66fff5fd-de78-45b0-880a-d2e8104242b5/datasets/piddle_FULL_onlyNetstat.csv','/media/root/66fff5fd-de78-45b0-880a-d2e8104242b5/datasets/piddle_FULL_onlyNetstat_scores.csv',111,5179941)
 
-ex.trainAndexecute('E:/thesis_data/datasets/videoJak_full_onlyNetstat.csv','E:/thesis_data/datasets/videoJak_full_onlyNetstat_scores.csv',111,1750648)
+ex.trainAndexecute('E:/thesis_data/datasets/videoJak_full_onlyNetstat_testSamples.csv','E:/thesis_data/datasets/videoJak_full_onlyNetstat_testSamples_singleSDA_scores.csv',111,1750648)
