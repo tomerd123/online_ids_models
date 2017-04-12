@@ -18,6 +18,7 @@ class dAEnsemble(object):
 
             ae=dA.dA(indexesMap[counter],n_visible=len(indexesMap[counter]),n_hidden=numpy.amax([ int(len(indexesMap[counter])/3),1]))
             self.AEsList.append(ae)
+            self.aggDA=dA.dA(n_visible=AEsNumber,n_hidden=numpy.amax([ int(AEsNumber/3),1])) #added agg
 
             counter+=1
         self.AEsNumber=AEsNumber
@@ -41,6 +42,7 @@ class dAEnsemble(object):
                     input = (numpy.array(row[:111]).astype(float) - numpy.array(mins)) / (
                     numpy.array((numpy.array(maxs) - numpy.array(mins))))
 
+                    scoresList=[] #added agg
 
                     for ae in self.AEsList:
                         if encounteredAnomaly==0:
@@ -51,12 +53,24 @@ class dAEnsemble(object):
                             print("not match")
                             continue
 
+                        scoresList.append(score) #added agg
                         totalScore+=score*(ae.n_visible)
 
+                    # added aggr
+                    if len(scoresList)==14:
+
+                        if encounteredAnomaly==0:
+                            score=self.aggDA.train(input=numpy.array(scoresList))
+                        else:
+                            score=self.aggDA.feedForward(input=numpy.array(scoresList))
+                    else:
+                        continue
+                    # end added aggr
 
 
                     totalScore/=len(self.AEsList*len(input))
 
+                    totalScore=score # added aggr
                     ensembleCmeansFile.write(str(totalScore) + "," + str(row[111]) + "\n")
                     #except:
                      #   print("packet rejected")
@@ -385,6 +399,5 @@ aes=dAEnsemble(14,indexesMap)
 #maxs,mins=aes.findMaxsAndMins('E:/thesis_data/datasets/piddle_FULL_onlyNetstat.csv')
 #aes.trainAndExecute('E:/thesis_data/datasets/piddle_FULL_onlyNetstat.csv','E:/thesis_data/datasets/piddle_FULL_onlyNetstat_scoresAEEnsemble.csv',maxs,mins, 1750648)
 
-maxs,mins=aes.findMaxsAndMins('D:/datasets/videoJak_full_onlyNetstat.csv')
-aes.trainAndExecute('D:/datasets/videoJak_full_onlyNetstat.csv','D:/datasets/videoJak_full_onlyNetstat_scoresAEEnsemble_random.csv',maxs,mins, 1750648)
-
+maxs,mins=aes.findMaxsAndMins('D:/datasets/SYN_full_onlyNetstat.csv')
+aes.trainAndExecute('D:/datasets/SYN_full_onlyNetstat.csv','D:/datasets/SYN_full_onlyNetstat_aggDA_randomCluster.csv',maxs,mins, 1750648)
