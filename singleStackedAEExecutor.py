@@ -8,6 +8,7 @@ import csv
 import stackedDA
 
 
+
 class Executor (object):
 
     def trainAndexecute (self,dbPath,scoresPath,visible,trainToFeedForwardThresh):
