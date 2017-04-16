@@ -22,8 +22,12 @@ class Executor (object):
                     if i % 10000 == 0:
                         print(i)
                     if i > 0:  # not header
-                        for j in range(len(row)-1):
-                            row[j]=float(row[j])
+                        try:
+                            for j in range(len(row)-1):
+                                row[j]=float(row[j])
+                        except:
+                            print("observation " + str(i) + " " + str(j) + " " + str(row[j]) + "rejected")
+                            continue
                     else:
                         continue
                     if len(row)-1!=len(maxs):
@@ -31,7 +35,11 @@ class Executor (object):
                         continue
                     else:
                         for number in range(len(row)-1):
-                            row[number]=(row[number]-mins[number])/(maxs[number]-mins[number])
+                            if maxs[number]==0 and mins[number]==0:
+                                row[number]=0
+                            else:
+
+                                row[number]=(row[number]-mins[number])/(maxs[number]-mins[number])
 
                     #row = (row - mins) / (maxs - mins)
 
@@ -57,9 +65,13 @@ class Executor (object):
                     if i % 10000 == 0:
                         print(i)
                     if i > 0:  # not header
-                        for j in range(len(row) - 1):
-                            row[j] = float(row[j])
-                        # x = x[numpy.array([1,2,4,5,7,8,10,11,13,14,16,17])-1]
+                        try:
+                            for j in range(len(row) - 1):
+                                row[j] = float(row[j])
+                        except:
+                            print("observation "+str(i)+" "+str(j)+" "+str(row[j])+ "rejected")
+                            continue
+                            # x = x[numpy.array([1,2,4,5,7,8,10,11,13,14,16,17])-1]
 
                         if len (row)<len(maxs):
                             continue
@@ -81,4 +93,4 @@ ex=Executor()
 
 #ex.trainAndexecute('/media/root/66fff5fd-de78-45b0-880a-d2e8104242b5/datasets/piddle_FULL_onlyNetstat.csv','/media/root/66fff5fd-de78-45b0-880a-d2e8104242b5/datasets/piddle_FULL_onlyNetstat_scores.csv',111,5179941)
 
-ex.trainAndexecute('E:/thesis_data/datasets/videoJak_full_onlyNetstat.csv','E:/thesis_data/datasets/videoJak_full_onlyNetstat_scores.csv',111,1750648)
+ex.trainAndexecute('E:/thesis_data/datasets/ctu_818_52_NetstatOnly.csv','E:/thesis_data/datasets/ctu_818_52_singleAE_NetstatOnly_scores.csv',111,53000)

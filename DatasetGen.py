@@ -272,12 +272,107 @@ def physicalMIM_Dataset_Gen():
                 csvout.write(unicode("\n", "utf-8"))
 
                         #csvout.writerow(row + list(stats) + [Label])
-RTSP_videoJak_Dataset_Gen()
-#SYN_Dataset_Gen()
-#physicalMIM_Dataset_Gen()
+
+
+def CTU52818_Dataset_Gen():
+    ht = ns.netStat(50000,50000)
+    with io.open('E:/thesis_data/datasets/ctu-818-52.csv','rt',encoding="utf8") as tsvin, io.open('E:/thesis_data/datasets/ctu_818_52_Full.csv', 'wt', newline='') as csvout:
+        tsvin = csv.reader(tsvin, delimiter=',')
+        count = 0
+
+        for row in tsvin:
+            count= count + 1
+            if count%10000==0:
+                print(count)
+
+            if count == 1:
+                #print (str(len(row))+str (" num of original headers"))
+
+                #csvout.writerow(str(row) + str(ht.getNetStatHeaders())+["Class"])
+                for f in row:
+                    csvout.write(unicode(str(f)+",","utf-8"))
+                for f in ht.getNetStatHeaders():
+
+                    csvout.write(unicode(str(f)+",","utf-8"))
+                csvout.write(unicode("Class","utf-8"))
+                csvout.write(unicode("\n","utf-8"))
+                #print (str(len(ht.getNetStatHeaders()))+str(" are the stats headers"))
+                #csvout = csv.writer(csvout)
+
+                """
+                counter = 0
+                for x in row:
+                    print(str(x) + ", " + str(counter))
+                    counter += 1
+                """
+            else:
+                #print (str(len(row))+str(" num of original features"))
+                try:
+                    if count==2:
+                        dateAr=row[0].split(' ')[1].split(':')
+                        for m in range(len(dateAr)):
+                            dateAr[m]=float(dateAr[m])
+                        startTS=dateAr[0]*3600*1000+dateAr[1]*60*1000+dateAr[2]*1000
+                    dateAr = row[0].split(' ')[1].split(':')
+                    for m in range(len(dateAr)):
+                        dateAr[m] = float(dateAr[m])
+                    timestamp = dateAr[0]*3600*1000+dateAr[1]*60*1000+dateAr[2]*1000-startTS #change format
+                    framelen = row[12]
+                    srcIP = row[3] #ipv4 or ipv6 address: ipv4 or ipv6 (one will be '')
+                    dstIP = row[6] #ipv4 or ipv6 address
+                    srcproto = row[4] #UDP or TCP port: the concatenation of the two port strings will will results in an OR "[tcp|udp]"
+                    dstproto = row[7] #UDP or TCP port
+
+
+                    if srcproto == '': #it's a L2/L1 level protocol
+                        if row[2]=="arp": #is ARP
+                            srcproto = 'arp'
+                            dstproto = 'arp'
+                        elif row[2] =='igmp': #is IGMP
+                            srcproto = 'igmp'
+                            dstproto = 'igmp'
+                        elif row[2] == 'icmp': #is ICMP
+                            srcproto = 'icmp'
+                            dstproto = 'icmp'
+
+                        elif srcIP+srcproto+dstIP+dstproto == '': #some other protocol
+                            srcIP = row[3]  # src MAC
+                            dstIP = row[6]  # dst MAC
+                    stats = ht.updateGetStats(srcIP,srcIP,srcproto,dstIP,dstproto,int(framelen),float(timestamp))
+                    #print (str(len(stats))+ str(" num of stat features"))
+                    Label = "0"
+                    if row[14].find("Botnet")!=-1: #1750648 frame.no
+                        #print("reached")
+                        Label = "1"
+                    #replace missing values with -1
+                    for index, item in enumerate(row):
+                        if item == '':
+                            row[index] = '-1'
+                    m=map(str,row)
+                    m2=map(str,list(stats))
+                    j2=', '.join(m2)
+                    j=', '.join(m)
+                    j+=","+j2
+                    j+=","+Label
+                    #csvout.writerow(row + list(stats) + [Label],"utf-8")
+                    csvout.write(unicode(str(j),"utf-8"))
+                    csvout.write(unicode("\n","utf-8"))
+
+
+                except Exception as ex:
+                    print (ex.message)
+                    count+=1
+                    print("observation "+str(count)+" was rejected")
+                    continue
+
 
 #SYN_Dataset_Gen()
 #physicalMIM_Dataset_Gen()
+#SYN_Dataset_Gen()
+#physicalMIM_Dataset_Gen()
+
+CTU52818_Dataset_Gen()
+
 # with open('D:\datasets\\videoJak.tsv', 'rb') as f:
 #     temp_lines = f.readline() + '\n'.encode('ascii') + f.readline()
 #     dialect = csv.Sniffer().sniff(f.read(1024), delimiters='\t'.encode('ascii'))

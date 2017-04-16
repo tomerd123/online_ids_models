@@ -29,35 +29,41 @@ class dAEnsemble(object):
             csvin = csv.reader(csvin, delimiter=',')
             with open(ensembleCMeans,'w') as ensembleCmeansFile:
                 for i, row in enumerate(csvin):
+                    try:
+                        if i!=0 and float(row[111])!=0:
+                            encounteredAnomaly=1
 
-                    if i!=0 and float(row[111])!=0:
-                        encounteredAnomaly=1
-
-                    if i==0:
-                        continue
-                    if i%10000==0:
-                        print(i)
-                    totalScore=0
-                    input = (numpy.array(row[:111]).astype(float) - numpy.array(mins)) / (
-                    numpy.array((numpy.array(maxs) - numpy.array(mins))))
-
-
-                    for ae in self.AEsList:
-                        if encounteredAnomaly==0:
-                            score=ae.train(input=input)
-                        else:
-                            score=ae.feedForward(input=input)
-                        if (score<0) :
-                            print("not match")
+                        if i==0:
                             continue
+                        if i%10000==0:
+                            print(i)
+                        totalScore=0
+                        input = (numpy.array(row[:111]).astype(float) - numpy.array(mins)) / (
+                        numpy.array((numpy.array(maxs) - numpy.array(mins))))
 
-                        totalScore+=score*(ae.n_visible)
+                        for m in range(len(input)):
+                            if numpy.isnan(input[m])==True:
+                                input[m]=0
+
+                        for ae in self.AEsList:
+                            if encounteredAnomaly==0:
+                                score=ae.train(input=input)
+                            else:
+                                score=ae.feedForward(input=input)
+                            if (score<0) :
+                                print("not match")
+                                continue
+
+                            totalScore+=score*(ae.n_visible)
 
 
 
-                    totalScore/=len(self.AEsList*len(input))
+                        totalScore/=len(self.AEsList*len(input))
 
-                    ensembleCmeansFile.write(str(totalScore) + "," + str(row[111]) + "\n")
+                        ensembleCmeansFile.write(str(totalScore) + "," + str(row[111]) + "\n")
+                    except:
+                        print ("observation rejected")
+                        continue
                     #except:
                      #   print("packet rejected")
                       #  continue
@@ -385,6 +391,6 @@ aes=dAEnsemble(14,indexesMap)
 #maxs,mins=aes.findMaxsAndMins('E:/thesis_data/datasets/piddle_FULL_onlyNetstat.csv')
 #aes.trainAndExecute('E:/thesis_data/datasets/piddle_FULL_onlyNetstat.csv','E:/thesis_data/datasets/piddle_FULL_onlyNetstat_scoresAEEnsemble.csv',maxs,mins, 1750648)
 
-maxs,mins=aes.findMaxsAndMins('D:/datasets/videoJak_full_onlyNetstat.csv')
-aes.trainAndExecute('D:/datasets/videoJak_full_onlyNetstat.csv','D:/datasets/videoJak_full_onlyNetstat_scoresAEEnsemble_random.csv',maxs,mins, 1750648)
+maxs,mins=aes.findMaxsAndMins('E:/thesis_data/datasets/ctu_818_52_NetstatOnly.csv')
+aes.trainAndExecute('E:/thesis_data/datasets/ctu_818_52_NetstatOnly.csv','E:/thesis_data/datasets/ctu_818_52_AEEnsembleNetstatOnly_random.csv',maxs,mins, 53000)
 

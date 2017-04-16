@@ -30,48 +30,55 @@ class dAEnsemble(object):
             csvin = csv.reader(csvin, delimiter=',')
             with open(ensembleCMeans,'w') as ensembleCmeansFile:
                 for i, row in enumerate(csvin):
+                    try:
+                        if i!=0 and float(row[111])!=0:
+                            encounteredAnomaly=1
 
-                    if i!=0 and float(row[111])!=0:
-                        encounteredAnomaly=1
-
-                    if i==0:
-                        continue
-                    if i%10000==0:
-                        print(i)
-                    totalScore=0
-                    input = (numpy.array(row[:111]).astype(float) - numpy.array(mins)) / (
-                    numpy.array((numpy.array(maxs) - numpy.array(mins))))
-
-                    scoresList=[] #added agg
-
-                    for ae in self.AEsList:
-                        if encounteredAnomaly==0:
-                            score=ae.train(input=input)
-                        else:
-                            score=ae.feedForward(input=input)
-                        if (score<0) :
-                            print("not match")
+                        if i==0:
                             continue
+                        if i%10000==0:
+                            print(i)
+                        totalScore=0
+                        input = (numpy.array(row[:111]).astype(float) - numpy.array(mins)) / (
+                        numpy.array((numpy.array(maxs) - numpy.array(mins))))
+                        for m in range(len(input)):
+                            if numpy.isnan(input[m])==True:
+                                input[m]=0
 
-                        scoresList.append(score) #added agg
-                        totalScore+=score*(ae.n_visible)
+                        scoresList=[] #added agg
+                        totalScore=0
+                        for ae in self.AEsList:
+                            #if encounteredAnomaly==0:
+                            if i<threshold:
+                                score=ae.train(input=input)
+                            else:
+                                score=ae.feedForward(input=input)
+                            if (score<0) :
+                                print("not match")
+                                continue
 
-                    # added aggr
-                    if len(scoresList)==14:
+                            scoresList.append(score) #added agg
+                            totalScore+=score*(ae.n_visible)
 
-                        if encounteredAnomaly==0:
-                            score=self.aggDA.train(input=numpy.array(scoresList))
+                        # added aggr
+                        if len(scoresList)==14:
+
+                            if encounteredAnomaly==0:
+                                score=self.aggDA.train(input=numpy.array(scoresList))
+                            else:
+                                score=self.aggDA.feedForward(input=numpy.array(scoresList))
                         else:
-                            score=self.aggDA.feedForward(input=numpy.array(scoresList))
-                    else:
+                            continue
+                        # end added aggr
+
+
+                        totalScore/=len(self.AEsList*len(input))
+
+                        totalScore=score # added aggr
+                        ensembleCmeansFile.write(str(totalScore) + "," + str(row[111]) + "\n")
+                    except:
+                        print("observation rejected")
                         continue
-                    # end added aggr
-
-
-                    totalScore/=len(self.AEsList*len(input))
-
-                    totalScore=score # added aggr
-                    ensembleCmeansFile.write(str(totalScore) + "," + str(row[111]) + "\n")
                     #except:
                      #   print("packet rejected")
                       #  continue
@@ -359,6 +366,63 @@ mins=[  1.54020858e+00,   3.86159057e+02,   1.51891494e+05,   9.58761998e+00,
    1.00000000e+00,   4.20000000e+01 ,  0.00000000e+00 ,  4.20000000e+01,
    0.00000000e+00 , -2.42701016e+03  ,-7.12221832e-01]
 
+
+maxs=[  1.42487303e+01,   2.42567968e+08,   5.76000000e+16,   1.85920645e+01,
+   2.41569607e+08,   5.76000000e+16,   3.29457110e+01,   2.40571195e+08,
+   5.76000000e+16 ,  6.17524851e+01 ,  2.12806258e+08 ,  5.69000000e+16,
+   1.31103112e+02  , 8.67213659e+07  , 1.41000000e+16  , 8.88315549e+02,
+   8.67046777e+07   ,2.79000000e+15   ,3.29457110e+01   ,5.03830705e+08,
+   9.86642414e+06,   5.03830705e+08,   9.73000000e+13,   1.85010741e+09,
+   3.58863454e+04 ,  5.10420184e+01 ,  5.03830705e+08 ,  8.90959336e+06,
+   5.03830705e+08  , 7.94000000e+13  , 5.17153000e+11  , 2.27403532e+03,
+   6.16848333e+01   ,5.03830705e+08   ,2.80198982e+07   ,5.03830705e+08,
+   7.85000000e+14,   1.11000000e+12,   4.47030275e+03,   1.03574102e+02,
+   1.52402702e+08 ,  4.99000000e+16 ,  1.42487303e+01 ,  2.42567968e+08,
+   5.76000000e+16  , 1.85920632e+01  , 2.41569607e+08  , 5.76000000e+16,
+   3.29457110e+01   ,2.40571195e+08   ,5.76000000e+16   ,6.16848333e+01,
+   2.39385282e+08,   5.76000000e+16,   1.03574102e+02,   1.52402702e+08,
+   4.99000000e+16 ,  7.53297536e+02 ,  1.32430976e+08 ,  6.73000000e+15,
+   3.29457110e+01  , 5.03830705e+08  , 9.86642414e+06  , 5.03830705e+08,
+   9.73000000e+13   ,1.85010741e+09   ,2.66293761e+02   ,6.16848333e+01,
+   5.03830705e+08,   2.80198982e+07,   5.03830705e+08,   7.85000000e+14,
+   1.16000000e+12,   3.94916429e+03 ,  1.03574102e+02 ,  5.03830705e+08,
+   4.06619119e+07 ,  5.03830705e+08  , 1.65000000e+15  , 3.35000000e+12,
+   1.26639625e+00  , 3.29457110e+01   ,9.59429670e+05   ,2.07269000e+11,
+   6.16848333e+01   ,9.59429670e+05,   2.07383000e+11,   1.03574102e+02,
+   9.59429670e+05,   2.07384000e+11 ,  4.76780569e+00 ,  5.03830705e+08,
+   2.15499793e+02 ,  5.03830705e+08  , 4.64401608e+04  , 0.00000000e+00,
+   0.00000000e+00  , 4.97578523e+00   ,5.03830705e+08   ,2.15499998e+02,
+   5.03830705e+08   ,4.64402491e+04,   0.00000000e+00,   0.00000000e+00,
+   5.60885824e+00,   5.03830705e+08 ,  2.37255234e+02 ,  5.03830705e+08,
+   5.62900462e+04 ,  0.00000000e+00  , 0.00000000e+00]
+mins=[  1.00000000e+00  , 6.00000000e+01,   0.00000000e+00,   1.00000000e+00,
+   6.00000000e+01   ,0.00000000e+00 ,  1.00000000e+00 ,  6.00000000e+01,
+   0.00000000e+00   ,1.00000000e+00  , 6.00529898e+01  , 0.00000000e+00,
+   1.00000000e+00   ,9.02020872e+01   ,0.00000000e+00   ,1.00000000e+00,
+   7.68172368e+02,   0.00000000e+00,   1.00000000e+00,   6.00000000e+01,
+   0.00000000e+00 ,  6.00000000e+01 ,  0.00000000e+00 , -4.34264110e+08,
+  -4.26147766e+01  , 1.00000000e+00  , 6.00000000e+01  , 0.00000000e+00,
+   6.00000000e+01   ,0.00000000e+00  ,-3.05451000e+11  ,-3.75997729e+02,
+   1.00000000e+00,   6.00000000e+01,   0.00000000e+00,   6.00000000e+01,
+   0.00000000e+00 , -1.35000000e+12 , -4.74898221e+03 ,  1.00000000e+00,
+   6.00000000e+01  , 0.00000000e+00  , 1.00000000e+00  , 6.00000000e+01,
+   0.00000000e+00   ,1.00000000e+00   ,6.00000000e+01   ,0.00000000e+00,
+   1.00000000e+00,   6.00000000e+01,   0.00000000e+00,   1.00000000e+00,
+   6.00000000e+01 ,  0.00000000e+00 ,  1.00000000e+00 ,  6.00000000e+01,
+   0.00000000e+00  , 1.00000000e+00  , 6.00000000e+01  , 0.00000000e+00,
+   1.00000000e+00   ,6.00000000e+01   ,0.00000000e+00   ,6.00000000e+01,
+   0.00000000e+00,  -7.94756194e+07,  -1.30173786e+01,   1.00000000e+00,
+   6.00000000e+01 ,  0.00000000e+00 ,  6.00000000e+01 ,  0.00000000e+00,
+  -1.35000000e+12  ,-7.38345579e+00  , 1.00000000e+00  , 6.00000000e+01,
+   0.00000000e+00   ,6.00000000e+01   ,0.00000000e+00  ,-5.73232629e+09,
+  -6.84877698e+01,   1.00000000e+00,   0.00000000e+00,   0.00000000e+00,
+   1.00000000e+00 ,  0.00000000e+00 ,  0.00000000e+00 ,  1.00000000e+00,
+   0.00000000e+00  , 0.00000000e+00  , 1.00000000e+00  , 6.00000000e+01,
+   0.00000000e+00   ,6.00000000e+01   ,0.00000000e+00   ,0.00000000e+00,
+   0.00000000e+00,   1.00000000e+00,   6.00000000e+01,   0.00000000e+00,
+   6.00000000e+01 ,  0.00000000e+00 ,  0.00000000e+00 ,  0.00000000e+00,
+   1.00000000e+00  , 6.00000000e+01  , 0.00000000e+00  , 6.00000000e+01,
+   0.00000000e+00   ,0.00000000e+00,   0.00000000e+00]
 clustersDistribution = [10,8,1,10,8,9,8,8,11,13,8,14,3,8,14,12,8,14,10,8,10,8,2,10,10,8,8,10,8,2,10,10,8,8,10
     ,8,2,10,10,13,8,4,10,8,7,10,8,7,10,8,4,8,8,4,13,8,4,13,8,4,10,8,10,8,5,10,10,8,8,10,8,6,10,10,13,8,10,8,6,10
     ,10,10,10,10,8,10,10,13,10,10,10,8,10,8,5,10,10,8,8,10,8,6,10,10,13,8,10,8,6,10,10]
@@ -399,5 +463,5 @@ aes=dAEnsemble(14,indexesMap)
 #maxs,mins=aes.findMaxsAndMins('E:/thesis_data/datasets/piddle_FULL_onlyNetstat.csv')
 #aes.trainAndExecute('E:/thesis_data/datasets/piddle_FULL_onlyNetstat.csv','E:/thesis_data/datasets/piddle_FULL_onlyNetstat_scoresAEEnsemble.csv',maxs,mins, 1750648)
 
-maxs,mins=aes.findMaxsAndMins('D:/datasets/SYN_full_onlyNetstat.csv')
-aes.trainAndExecute('D:/datasets/SYN_full_onlyNetstat.csv','D:/datasets/SYN_full_onlyNetstat_aggDA_randomCluster.csv',maxs,mins, 1750648)
+#maxs,mins=aes.findMaxsAndMins('E:/thesis_data/datasets/ctu_818_52_NetstatOnly.csv')
+aes.trainAndExecute('E:/thesis_data/datasets/ctu_818_52_NetstatOnly.csv','E:/thesis_data/datasets/ctu_818_52_AEEnsembleWithAggDA_NetstatOnly_scores.csv',maxs,mins, 53000)
