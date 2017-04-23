@@ -23,7 +23,7 @@ class dAEnsemble(object):
             counter+=1
         self.AEsNumber=AEsNumber
 
-    def trainAndExecute(self,dsPath,ensembleCMeans,maxs,mins,threshold):
+    def trainAndExecute(self,dsPath,ensembleCMeans,maxs,mins,threshold,numOfClusters):
         encounteredAnomaly=0
 
         with open(dsPath, 'rt') as csvin:
@@ -61,7 +61,7 @@ class dAEnsemble(object):
                             totalScore+=score*(ae.n_visible)
 
                         # added aggr
-                        if len(scoresList)==14:
+                        if len(scoresList)==numOfClusters:
 
                             if encounteredAnomaly==0:
                                 score=self.aggDA.train(input=numpy.array(scoresList))
@@ -432,6 +432,9 @@ clustersDistribution = [1,1,1,1,1,1,1,2,2,2,2,2,2,2,3,3,3,3,3,3,3,4,4,4,4,4,4,4,
     ,6,6,6,6,6,6,6,7,7,7,7,7,7,7,8,8,8,8,8,8,8,9,9,9,9,9,9,9,10,10,10,10,10,10,10,11,11,11,11,11,11,11,12,12,12
     ,12,12,12,12,13,13,13,13,13,13,13,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14,14]
 
+clustersDistribution=[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3,3,3,4,4,4,4,4,4,
+                      4, 4, 4,4,4,4,4,4,4,4,4,4,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,6,6,6,6,6,6,6,
+                      6, 6, 6, 6, 6, 6, 6,6,6,6,6,6,6,6]
 
 clusterMap = map(lambda x: (x, clustersDistribution[x]), range(len(clustersDistribution)))
 
@@ -448,7 +451,8 @@ for key in range(len(clusterMap)):
 
 
 
-aes=dAEnsemble(14,indexesMap)
+#aes=dAEnsemble(14,indexesMap)
+aes=dAEnsemble(6,indexesMap)
 #aes.getLabels('Datasets//physMIMCsv.csv','Datasets//physMIMCsvLabels.csv')
 #aes.createNormalizedDataset('Datasets//physMIMCsv.csv','/media/root/66fff5fd-de78-45b0-880a-d2e8104242b5//datasets//physMIMCsvNormalized.csv',maxs,mins)
 #aes.findMaxsAndMins()
@@ -463,5 +467,35 @@ aes=dAEnsemble(14,indexesMap)
 #maxs,mins=aes.findMaxsAndMins('E:/thesis_data/datasets/piddle_FULL_onlyNetstat.csv')
 #aes.trainAndExecute('E:/thesis_data/datasets/piddle_FULL_onlyNetstat.csv','E:/thesis_data/datasets/piddle_FULL_onlyNetstat_scoresAEEnsemble.csv',maxs,mins, 1750648)
 
-#maxs,mins=aes.findMaxsAndMins('E:/thesis_data/datasets/ctu_818_52_NetstatOnly.csv')
-aes.trainAndExecute('E:/thesis_data/datasets/ctu_818_52_NetstatOnly.csv','E:/thesis_data/datasets/ctu_818_52_AEEnsembleWithAggDA_NetstatOnly_scores.csv',maxs,mins, 53000)
+maxs,mins=aes.findMaxsAndMins('E:/thesis_data/datasets/SYN_full_onlyNetstat.csv')
+aes.trainAndExecute('E:/thesis_data/datasets/SYN_full_onlyNetstat.csv','E:/thesis_data/datasets/SYN_full_onlyNetstat_MindCluster6_scores.csv',maxs,mins, 1536268,6)
+
+#maxs,mins=aes.findMaxsAndMins('E:/thesis_data/datasets/piddle_FULL_onlyNetstat.csv')
+#aes.trainAndExecute('E:/thesis_data/datasets/piddle_FULL_onlyNetstat.csv','E:/thesis_data/datasets/piddle_FULL_onlyNetstat_microMindindCluster_scores.csv',maxs,mins, 5179941)
+
+
+clustersDistribution=[1,1,1,2,2,2,3,3,3,4,4,4,5,5,5,6,6,6,7,7,7,8,8,8,9,9,9,10,10,10,10,10,10,10,10,10,10,10,10,11,11,11,12,12,12,13,13,13,
+                      14, 14, 14,15,15,15,16,16,16,17,17,17,18,18,18,18,18,18,18,19,19,19,19,19,19,19,20,20,20,20,20,20,20,21,21,21,22,22,22,23,23,23,24,24,24,24,24,24,24,
+                      25, 25, 25, 25, 25, 25, 25,26,26,26,26,26,26,26]
+clusterMap = map(lambda x: (x, clustersDistribution[x]), range(len(clustersDistribution)))
+indexesMap={}
+for key in range(len(clusterMap)):
+    if indexesMap.keys().__contains__(clusterMap[key][1])==False:
+        indexesMap[clusterMap[key][1]]=[]
+        indexesMap[clusterMap[key][1]].append(clusterMap[key][0])
+    else:
+        indexesMap[clusterMap[key][1]].append(clusterMap[key][0])
+
+aes=dAEnsemble(26,indexesMap)
+
+maxs,mins=aes.findMaxsAndMins('E:/thesis_data/datasets/videoJak_full_onlyNetstat.csv')
+aes.trainAndExecute('E:/thesis_data/datasets/videoJak_full_onlyNetstat.csv','E:/thesis_data/datasets/videoJak_full_onlyNetstat_microMindCluster_scores.csv',maxs,mins, 1750648,26)
+
+maxs,mins=aes.findMaxsAndMins('E:/thesis_data/datasets/SYN_full_onlyNetstat.csv')
+aes.trainAndExecute('E:/thesis_data/datasets/SYN_full_onlyNetstat.csv','E:/thesis_data/datasets/SYN_full_onlyNetstat_microMindCluster_scores.csv',maxs,mins, 1536268,26)
+
+maxs,mins=aes.findMaxsAndMins('E:/thesis_data/datasets/piddle_FULL_onlyNetstat.csv')
+aes.trainAndExecute('E:/thesis_data/datasets/piddle_FULL_onlyNetstat.csv','E:/thesis_data/datasets/piddle_FULL_onlyNetstat_microMindCluster_scores.csv',maxs,mins, 5179941,26)
+
+maxs,mins=aes.findMaxsAndMins('E:/thesis_data/datasets/ctu_818_52_NetstatOnly.csv')
+aes.trainAndExecute('E:/thesis_data/datasets/ctu_818_52_NetstatOnly.csv','E:/thesis_data/datasets/ctu_818_52_NetstatOnly_microMindCluster_scores.csv',maxs,mins, 53000,26)

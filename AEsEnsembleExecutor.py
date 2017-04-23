@@ -25,6 +25,7 @@ class dAEnsemble(object):
     def trainAndExecute(self,dsPath,ensembleCMeans,maxs,mins,threshold):
         encounteredAnomaly=0
 
+
         with open(dsPath, 'rt') as csvin:
             csvin = csv.reader(csvin, delimiter=',')
             with open(ensembleCMeans,'w') as ensembleCmeansFile:
