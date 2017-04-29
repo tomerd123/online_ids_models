@@ -488,6 +488,7 @@ for key in range(len(clusterMap)):
 
 aes=dAEnsemble(26,indexesMap)
 
+
 maxs,mins=aes.findMaxsAndMins('E:/thesis_data/datasets/videoJak_full_onlyNetstat.csv')
 aes.trainAndExecute('E:/thesis_data/datasets/videoJak_full_onlyNetstat.csv','E:/thesis_data/datasets/videoJak_full_onlyNetstat_microMindCluster_scores.csv',maxs,mins, 1750648,26)
 
