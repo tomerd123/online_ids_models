@@ -257,6 +257,7 @@ aes=dAEnsemble(16,indexesMap)
 
 
 
+
 maxs,mins=aes.findMaxsAndMins('D:/thesis_data/datasets/videoJak_full_onlyNetstat.csv')
 aes.trainAndExecute('D:/thesis_data/datasets/videoJak_full_onlyNetstat.csv','D:/thesis_data/datasets/videoJak_full_onlyNetstat_microMindCluster_scores.csv',maxs,mins, 1750648,16)
 
