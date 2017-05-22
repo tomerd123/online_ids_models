@@ -214,6 +214,7 @@ for key in range(len(clusterMap)):
 
 
 
+
 #aes=dAEnsemble(14,indexesMap)
 aes=dAEnsemble(8,indexesMap)
 #aes.getLabels('Datasets//physMIMCsv.csv','Datasets//physMIMCsvLabels.csv')
@@ -259,6 +260,8 @@ aes=dAEnsemble(16,indexesMap)
 
 
 maxs,mins=aes.findMaxsAndMins('D:/thesis_data/datasets/videoJak_full_onlyNetstat.csv')
+#maxs=[1000000 for i in range(111)]
+#mins=[0 for i in range(111)]
 aes.trainAndExecute('D:/thesis_data/datasets/videoJak_full_onlyNetstat.csv','D:/thesis_data/datasets/videoJak_full_onlyNetstat_microMindCluster_scores.csv',maxs,mins, 1750648,16)
 
 indexesMap=getIndexesMap('D:/thesis_data/datasets/featureClustering/fcm/fcm_syn.csv')
