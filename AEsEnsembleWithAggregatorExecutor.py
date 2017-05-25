@@ -117,6 +117,88 @@ class dAEnsemble(object):
                     #except:
                      #   print("packet rejected")
                       #  continue
+
+    def trainAndExecuteSingleDA(self,dsPath,ensembleCMeans,maxs,mins,threshold,numOfClusters):
+
+        d=dA.dA(n_visible=111,n_hidden=35)
+        encounteredAnomaly=0
+
+        with open(dsPath, 'rt') as csvin:
+            csvin = csv.reader(csvin, delimiter=',')
+            with open(ensembleCMeans,'w') as ensembleCmeansFile:
+                for i, row in enumerate(csvin):
+
+                    try:
+                        if i!=0 and float(row[111])!=0:
+                            encounteredAnomaly=1
+
+                        if i==0:
+                            continue
+                        if i%10000==0:
+                            print(i)
+                        totalScore=0
+                        input = (numpy.array(row[:111]).astype(float) - numpy.array(mins)) / (
+                        numpy.array((numpy.array(maxs) - numpy.array(mins)+1)))
+                        for m in range(len(input)):
+                            if numpy.isnan(input[m])==True:
+                                input[m]=0
+
+                        scoresList=[] #added agg
+                        totalScore=0
+
+                        aeCount=1
+                        #if encounteredAnomaly==0:
+                        """
+                        if i==threshold-1: #added mse
+                            lastTrainPacket=input #added mse
+                        """
+                        if i<threshold:
+
+                            score=d.train(input=input)
+                        else:
+                            score=d.feedForward(input=input)
+
+
+                        if (score<0) :
+                            print("not match")
+                            continue
+
+
+
+
+
+
+
+                        """
+                        #added mse
+                        if i>=threshold:
+                            mse=0
+                            for me in range(len(input)):
+                                mse+=numpy.abs(float(input[me])-float(lastTrainPacket[me]))
+                            #mse/=len(input)
+                        #added mse
+                        """
+
+
+                        totalScore=score # added aggr
+
+                        """
+                        if i>=threshold: #added mse
+                            totalScore+=(mse*mse) #added mse
+                        """
+
+                        #for inp in range(len(input)):
+                         #   ensembleCmeansFile.write(str(input[inp]) + ",")
+                        ensembleCmeansFile.write(str(totalScore) + "," + str(row[111]) + "\n")
+                    except Exception as ex:
+                        print(ex.message)
+                        print("observation rejected")
+                        continue
+                    #except:
+                     #   print("packet rejected")
+                      #  continue
+
+
     def findMaxsAndMins(self,dsPath):
 
 
@@ -292,6 +374,46 @@ maxs,mins=aes.findMaxsAndMins('D:/thesis_data/datasets/ctu_818_52_NetstatOnly.cs
 aes.trainAndExecute('D:/thesis_data/datasets/ctu_818_52_NetstatOnly.csv','D:/thesis_data/datasets/ctu_818_52_NetstatOnly_microMindCluster_scores.csv',maxs,mins, 53000,16)
 
 """
+#single dA
+aes=dAEnsemble(16,indexesMap)
+#maxs=[10000 for i in range(111)]
+#mins=[0 for i in range(111)]
+
+maxs,mins=aes.findMaxsAndMins('D:/thesis_data/datasets/videoJak_full_onlyNetstat.csv')
+
+aes.trainAndExecuteSingleDA('D:/thesis_data/datasets/videoJak_full_onlyNetstat.csv','D:/thesis_data/datasets/videoJak_full_onlyNetstat_SingleDA_scores.csv',maxs,mins, 1750648,16)
+
+
+clustersDistribution=ch.getClusterDistributionFromFile('D:/thesis_data/datasets/featureClustering/knn/KNN_Clustering_syn.txt')
+
+indexesMap=getIndexesMapFromClusterDistribution(clustersDistribution)
+aes=dAEnsemble(16,indexesMap)
+
+maxs,mins=aes.findMaxsAndMins('D:/thesis_data/datasets/SYN_full_onlyNetstat.csv')
+aes.trainAndExecuteSingleDA('D:/thesis_data/datasets/SYN_full_onlyNetstat.csv','D:/thesis_data/datasets/SYN_full_onlyNetstat_singleDA_scores.csv',maxs,mins, 1536168,16)
+
+clustersDistribution=ch.getClusterDistributionFromFile('D:/thesis_data/datasets/featureClustering/knn/KNN_Clustering_piddle.txt')
+
+indexesMap=getIndexesMapFromClusterDistribution(clustersDistribution)
+aes=dAEnsemble(16,indexesMap)
+
+maxs,mins=aes.findMaxsAndMins('D:/thesis_data/datasets/piddle_FULL_onlyNetstat.csv')
+aes.trainAndExecuteSingleDA('D:/thesis_data/datasets/piddle_FULL_onlyNetstat.csv','D:/thesis_data/datasets/piddle_FULL_onlyNetstat_singleDA_scores.csv',maxs,mins, 5179941,16)
+
+clustersDistribution = ch.getClusterDistributionFromFile('D:/thesis_data/datasets/featureClustering/knn/KNN_Clustering_ctu.txt')
+
+indexesMap = getIndexesMapFromClusterDistribution(clustersDistribution)
+aes=dAEnsemble(16,indexesMap)
+
+maxs,mins=aes.findMaxsAndMins('D:/thesis_data/datasets/ctu_818_52_NetstatOnly.csv')
+aes.trainAndExecuteSingleDA('D:/thesis_data/datasets/ctu_818_52_NetstatOnly.csv','D:/thesis_data/datasets/ctu_818_52_NetstatOnly_singleDA_scores.csv',maxs,mins, 53000,16)
+
+
+
+
+
+
+
 
 #knn ordered
 clustersDistribution=ch.getClusterDistributionFromFile('D:/thesis_data/datasets/featureClustering/knn/KNN_Clustering_rtsp.txt')
