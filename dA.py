@@ -2,6 +2,7 @@
 
 import sys
 import numpy
+import AfterImage as af
 #from utils import *
 #from sklearn.preprocessing import scale
 #from scipy import stats
@@ -11,6 +12,7 @@ class dA(object):
         self.indexesMap=indexesMap
         self.n_visible = n_visible  # num of units in visible (input) layer
         self.n_hidden = n_hidden  # num of units in hidden layer
+
 
         if rng is None:
             rng = numpy.random.RandomState(1234)
@@ -34,6 +36,7 @@ class dA(object):
         self.W_prime = self.W.T
         self.hbias = hbias
         self.vbias = vbias
+
 
     def sigmoid(self, z):
 
@@ -61,7 +64,10 @@ class dA(object):
     def train(self, lr=0.1, corruption_level=0.3, input=None):
         if input is not None:
 
-
+            if max(input)>1:
+                m1=min(input)
+                m2=max(input)
+                input=numpy.array([(input[i]-m1)/(m2-m1+1) for i in range(len(input))])
             self.x = input
         #if has indexesMap
         if self.indexesMap!=None:
@@ -92,11 +98,23 @@ class dA(object):
         A = self.x * numpy.log(z + eps)
         B = (1 - self.x) * numpy.log(1 - z + eps)
 
-        cross_entropy  = - numpy.mean(self.x * numpy.log(z+eps) + (1 - self.x) * numpy.log(1 - z+eps))
+        #cross_entropy  = - numpy.mean(self.x * numpy.log(z+eps) + (1 - self.x) * numpy.log(1 - z+eps))
 
-        return cross_entropy
+        #return cross_entropy
+        mse = numpy.array(((numpy.array(x) - numpy.array(z)) ** 2)).mean()  # MSE
+        return mse
 
-    def feedForward(self,  lr=0.1, corruption_level=0.3, input=None):
+    def execute(self, x, t=-1):  # returns MSE of the reconstruction of x
+
+            z = self.reconstruct(x)
+            mse = ((x - z) ** 2).mean()  # MSE
+
+            # rollmean?
+            if self.params.rollmean_L != numpy.Inf:
+                self.rollmean.insert(mse, t)
+                mse = self.rollmean.mean()
+            return mse
+    def feedForward(self,  lr=0.1, corruption_level=0.3, input=None,t=-1):
         if input is not None:
             self.x = input
 
@@ -131,8 +149,11 @@ class dA(object):
         B = (1 - self.x) * numpy.log(1 - z + eps)
 
         cross_entropy = - numpy.mean(self.x * numpy.log(z + eps) + (1 - self.x) * numpy.log(1 - z + eps))
+        mse=numpy.array(((numpy.array(x) - numpy.array(z)) ** 2)).mean()  # MSE
 
-        return cross_entropy
+
+        return mse
+        #return cross_entropy
     def negative_log_likelihood(self, corruption_level=0.3):
         tilde_x = self.get_corrupted_input(self.x, corruption_level)
         y = self.get_hidden_values(tilde_x)

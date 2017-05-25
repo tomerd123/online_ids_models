@@ -42,7 +42,7 @@ class dAEnsemble(object):
                             print(i)
                         totalScore=0
                         input = (numpy.array(row[:111]).astype(float) - numpy.array(mins)) / (
-                        numpy.array((numpy.array(maxs) - numpy.array(mins))))
+                        numpy.array((numpy.array(maxs) - numpy.array(mins)+1)))
                         for m in range(len(input)):
                             if numpy.isnan(input[m])==True:
                                 input[m]=0
@@ -253,15 +253,24 @@ def getIndexesMap(path,numOfClusters=16):
             indexesMap[clusterMap[key][1]].append(clusterMap[key][0])
     return indexesMap
 
+def getIndexesMapFromClusterDistribution(clustersDistribution):
+    clusterMap = map(lambda x: (x, clustersDistribution[x]), range(len(clustersDistribution)))
+    indexesMap = {}
+    for key in range(len(clusterMap)):
+        if indexesMap.keys().__contains__(clusterMap[key][1]) == False:
+            indexesMap[clusterMap[key][1]] = []
+            indexesMap[clusterMap[key][1]].append(clusterMap[key][0])
+        else:
+            indexesMap[clusterMap[key][1]].append(clusterMap[key][0])
+    return indexesMap
+
 indexesMap=getIndexesMap('D:/thesis_data/datasets/featureClustering/fcm/fcm_rtsp.csv')
 aes=dAEnsemble(16,indexesMap)
 
 
-
-
+"""
 maxs,mins=aes.findMaxsAndMins('D:/thesis_data/datasets/videoJak_full_onlyNetstat.csv')
-#maxs=[1000000 for i in range(111)]
-#mins=[0 for i in range(111)]
+
 aes.trainAndExecute('D:/thesis_data/datasets/videoJak_full_onlyNetstat.csv','D:/thesis_data/datasets/videoJak_full_onlyNetstat_microMindCluster_scores.csv',maxs,mins, 1750648,16)
 
 indexesMap=getIndexesMap('D:/thesis_data/datasets/featureClustering/fcm/fcm_syn.csv')
@@ -282,4 +291,127 @@ aes=dAEnsemble(16,indexesMap)
 maxs,mins=aes.findMaxsAndMins('D:/thesis_data/datasets/ctu_818_52_NetstatOnly.csv')
 aes.trainAndExecute('D:/thesis_data/datasets/ctu_818_52_NetstatOnly.csv','D:/thesis_data/datasets/ctu_818_52_NetstatOnly_microMindCluster_scores.csv',maxs,mins, 53000,16)
 
+"""
+
+#knn ordered
+clustersDistribution=ch.getClusterDistributionFromFile('D:/thesis_data/datasets/featureClustering/knn/KNN_Clustering_rtsp.txt')
+
+indexesMap=getIndexesMapFromClusterDistribution(clustersDistribution)
+
+aes=dAEnsemble(16,indexesMap)
+
+maxs,mins=aes.findMaxsAndMins('D:/thesis_data/datasets/videoJak_full_onlyNetstat.csv')
+
+aes.trainAndExecute('D:/thesis_data/datasets/videoJak_full_onlyNetstat.csv','D:/thesis_data/datasets/videoJak_full_onlyNetstat_KNNCluster_scores.csv',maxs,mins, 1750648,16)
+
+
+clustersDistribution=ch.getClusterDistributionFromFile('D:/thesis_data/datasets/featureClustering/knn/KNN_Clustering_syn.txt')
+
+indexesMap=getIndexesMapFromClusterDistribution(clustersDistribution)
+aes=dAEnsemble(16,indexesMap)
+
+maxs,mins=aes.findMaxsAndMins('D:/thesis_data/datasets/SYN_full_onlyNetstat.csv')
+aes.trainAndExecute('D:/thesis_data/datasets/SYN_full_onlyNetstat.csv','D:/thesis_data/datasets/SYN_full_onlyNetstat_KNNCluster_scores.csv',maxs,mins, 1536168,16)
+
+clustersDistribution=ch.getClusterDistributionFromFile('D:/thesis_data/datasets/featureClustering/knn/KNN_Clustering_piddle.txt')
+
+indexesMap=getIndexesMapFromClusterDistribution(clustersDistribution)
+aes=dAEnsemble(16,indexesMap)
+
+maxs,mins=aes.findMaxsAndMins('D:/thesis_data/datasets/piddle_FULL_onlyNetstat.csv')
+aes.trainAndExecute('D:/thesis_data/datasets/piddle_FULL_onlyNetstat.csv','D:/thesis_data/datasets/piddle_FULL_onlyNetstat_KNNCluster_scores.csv',maxs,mins, 5179941,16)
+
+clustersDistribution = ch.getClusterDistributionFromFile('D:/thesis_data/datasets/featureClustering/knn/KNN_Clustering_ctu.txt')
+
+indexesMap = getIndexesMapFromClusterDistribution(clustersDistribution)
+aes=dAEnsemble(16,indexesMap)
+
+maxs,mins=aes.findMaxsAndMins('D:/thesis_data/datasets/ctu_818_52_NetstatOnly.csv')
+aes.trainAndExecute('D:/thesis_data/datasets/ctu_818_52_NetstatOnly.csv','D:/thesis_data/datasets/ctu_818_52_NetstatOnly_KNNCluster_scores.csv',maxs,mins, 53000,16)
+
+
+
+
+
+
+#ordered by topic
+clustersDistribution=[1,1,1,2,2,2,3,3,3,4,4,4,5,5,5,6,6,6,7,7,7,8,8,8,9,9,9,10,10,10,10,10,10,10,10,10,10,10,10,11,11,11,12,12,12,13,13,13,
+                      14, 14, 14,15,15,15,16,16,16,17,17,17,18,18,18,18,18,18,18,19,19,19,19,19,19,19,20,20,20,20,20,20,20,21,21,21,22,22,22,23,23,23,24,24,24,24,24,24,24,
+                      25, 25, 25, 25, 25, 25, 25,26,26,26,26,26,26,26]
+
+clusterMap = map(lambda x: (x, clustersDistribution[x]), range(len(clustersDistribution)))
+indexesMap = {}
+for key in range(len(clusterMap)):
+    if indexesMap.keys().__contains__(clusterMap[key][1]) == False:
+        indexesMap[clusterMap[key][1]] = []
+        indexesMap[clusterMap[key][1]].append(clusterMap[key][0])
+    else:
+        indexesMap[clusterMap[key][1]].append(clusterMap[key][0])
+
+aes=dAEnsemble(26,indexesMap)
+
+maxs,mins=aes.findMaxsAndMins('D:/thesis_data/datasets/videoJak_full_onlyNetstat.csv')
+
+aes.trainAndExecute('D:/thesis_data/datasets/videoJak_full_onlyNetstat.csv','D:/thesis_data/datasets/videoJak_full_onlyNetstat_OrderedCluster_scores.csv',maxs,mins, 1750648,26)
+
+indexesMap=getIndexesMap('D:/thesis_data/datasets/featureClustering/fcm/fcm_syn.csv')
+aes=dAEnsemble(26,indexesMap)
+
+maxs,mins=aes.findMaxsAndMins('D:/thesis_data/datasets/SYN_full_onlyNetstat.csv')
+aes.trainAndExecute('D:/thesis_data/datasets/SYN_full_onlyNetstat.csv','D:/thesis_data/datasets/SYN_full_onlyNetstat_OrderedCluster_scores.csv',maxs,mins, 1536268,26)
+
+indexesMap=getIndexesMap('D:/thesis_data/datasets/featureClustering/fcm/fcm_piddle.csv')
+aes=dAEnsemble(26,indexesMap)
+
+maxs,mins=aes.findMaxsAndMins('D:/thesis_data/datasets/piddle_FULL_onlyNetstat.csv')
+aes.trainAndExecute('D:/thesis_data/datasets/piddle_FULL_onlyNetstat.csv','D:/thesis_data/datasets/piddle_FULL_onlyNetstat_OrderedCluster_scores.csv',maxs,mins, 5179941,26)
+
+indexesMap=getIndexesMap('D:/thesis_data/datasets/featureClustering/fcm/fcm_ctu.csv')
+aes=dAEnsemble(26,indexesMap)
+
+maxs,mins=aes.findMaxsAndMins('D:/thesis_data/datasets/ctu_818_52_NetstatOnly.csv')
+aes.trainAndExecute('D:/thesis_data/datasets/ctu_818_52_NetstatOnly.csv','D:/thesis_data/datasets/ctu_818_52_NetstatOnly_OrderedCluster_scores.csv',maxs,mins, 53000,26)
+
+
+
+
+
+#randomally ordered
+
+clustersDistribution=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,
+                      1, 2, 3,4,5,6,7,8,9,10,11,12,13,14,15,16,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,1,
+                      2, 3, 4, 5, 6, 7, 8,9,10,11,12,13,14,15]
+
+clusterMap = map(lambda x: (x, clustersDistribution[x]), range(len(clustersDistribution)))
+indexesMap = {}
+for key in range(len(clusterMap)):
+    if indexesMap.keys().__contains__(clusterMap[key][1]) == False:
+        indexesMap[clusterMap[key][1]] = []
+        indexesMap[clusterMap[key][1]].append(clusterMap[key][0])
+    else:
+        indexesMap[clusterMap[key][1]].append(clusterMap[key][0])
+
+aes=dAEnsemble(16,indexesMap)
+
+maxs,mins=aes.findMaxsAndMins('D:/thesis_data/datasets/videoJak_full_onlyNetstat.csv')
+
+aes.trainAndExecute('D:/thesis_data/datasets/videoJak_full_onlyNetstat.csv','D:/thesis_data/datasets/videoJak_full_onlyNetstat_RandomCluster_scores.csv',maxs,mins, 1750648,16)
+
+indexesMap=getIndexesMap('D:/thesis_data/datasets/featureClustering/fcm/fcm_syn.csv')
+aes=dAEnsemble(16,indexesMap)
+
+maxs,mins=aes.findMaxsAndMins('D:/thesis_data/datasets/SYN_full_onlyNetstat.csv')
+aes.trainAndExecute('D:/thesis_data/datasets/SYN_full_onlyNetstat.csv','D:/thesis_data/datasets/SYN_full_onlyNetstat_RandomCluster_scores.csv',maxs,mins, 1536168,16)
+
+indexesMap=getIndexesMap('D:/thesis_data/datasets/featureClustering/fcm/fcm_piddle.csv')
+aes=dAEnsemble(16,indexesMap)
+
+maxs,mins=aes.findMaxsAndMins('D:/thesis_data/datasets/piddle_FULL_onlyNetstat.csv')
+aes.trainAndExecute('D:/thesis_data/datasets/piddle_FULL_onlyNetstat.csv','D:/thesis_data/datasets/piddle_FULL_onlyNetstat_RandomCluster_scores.csv',maxs,mins, 5179941,16)
+
+indexesMap=getIndexesMap('D:/thesis_data/datasets/featureClustering/fcm/fcm_ctu.csv')
+aes=dAEnsemble(16,indexesMap)
+
+maxs,mins=aes.findMaxsAndMins('D:/thesis_data/datasets/ctu_818_52_NetstatOnly.csv')
+aes.trainAndExecute('D:/thesis_data/datasets/ctu_818_52_NetstatOnly.csv','D:/thesis_data/datasets/ctu_818_52_NetstatOnly_RandomCluster_scores.csv',maxs,mins, 53000,16)
 

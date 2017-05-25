@@ -31,3 +31,12 @@ def defineClusterForEachAttr (matPath,numOfClusters=16):
 
 
 #defineClusterForEachAttr(matPath='D:/datasets/featureClustering/fcm/fcm_syn.csv')
+
+def getClusterDistributionFromFile(path):
+    with open(path,'r') as file:
+
+        clusterDistribution=[]
+        for line in file.readlines():
+            clusterDistribution.append(int(line))
+
+        return clusterDistribution[:111]
